@@ -2,6 +2,7 @@ import os
 import json
 import random
 import requests
+import pathlib
 
 from base64 import b64encode
 from dotenv import load_dotenv, find_dotenv
@@ -80,6 +81,13 @@ def barGen(barCount):
     return barCSS
 
 
+def load_no_music_image():
+    none_image_path = str(pathlib.Path().absolute()) + "/api/static/none.jpg"
+    with open(none_image_path, "rb") as image_file:
+        encoded_string = b64encode(image_file.read()).decode("ascii")
+    return encoded_string
+
+
 def loadImageB64(url):
     response = requests.get(url)
     return b64encode(response.content).decode("ascii")
@@ -93,8 +101,7 @@ def makeSVG(data):
     if data == {} or data["item"] == 'None':
         contentBar = ""  # Shows/Hides the EQ bar if no song is currently playing
         currentStatus = "Last seen playing:"
-        image = loadImageB64(
-            "https://ryaneller.com/wp-content/uploads/2013/10/plain-white-background-300x300.jpg")
+        image = load_no_music_image()
         artistName = ""
         songName = "Nothing Playing"
     else:
