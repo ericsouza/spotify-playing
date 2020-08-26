@@ -17,7 +17,7 @@ SPOTIFY_SECRET_ID = os.getenv("SPOTIFY_SECRET_ID")
 SPOTIFY_REFRESH_TOKEN = os.getenv("SPOTIFY_REFRESH_TOKEN")
 
 SPOTIFY_URL_REFRESH_TOKEN = "https://accounts.spotify.com/api/token"
-SPOTIFY_URL_NOW_PLAYING = "https://api.spotify.com/v1/me/player/currently-playing"
+SPOTIFY_URL_NOW_PLAYING = "https://api.spotify.com/v1/me/player/currently-playing?additional_types=track%2Cepisode"
 SPOTIFY_URL_RECENTLY_PLAY = "https://api.spotify.com/v1/me/player/recently-played?limit=10"
 
 app = Flask(__name__)
@@ -53,8 +53,13 @@ def recentlyPlayed():
 
 def nowPlaying():
     token = refreshToken()
-    headers = {"Authorization": f"Bearer {token}"}
-    response = requests.get(SPOTIFY_URL_NOW_PLAYING, headers=headers)
+    headers = {"Authorization": f"Bearer {token}",
+               "Accept": "application/json",
+               "Content-Type": "application/json"
+               }
+
+    response = requests.get(SPOTIFY_URL_NOW_PLAYING,
+                            headers=headers)
 
     if response.status_code == 204:
         return {}
@@ -76,8 +81,8 @@ def barGen(barCount):
 
 
 def loadImageB64(url):
-    resposne = requests.get(url)
-    return b64encode(resposne.content).decode("ascii")
+    response = requests.get(url)
+    return b64encode(response.content).decode("ascii")
 
 
 def makeSVG(data):
@@ -86,19 +91,24 @@ def makeSVG(data):
     barCSS = barGen(barCount)
 
     if data == {} or data["item"] == 'None':
-        # contentBar = "" #Shows/Hides the EQ bar if no song is currently playing
+        contentBar = ""  # Shows/Hides the EQ bar if no song is currently playing
         currentStatus = "Last seen playing:"
-        recentPlays = recentlyPlayed()
-        recentPlaysLength = len(recentPlays["items"])
-        itemIndex = random.randint(0, recentPlaysLength - 1)
-        item = recentPlays["items"][itemIndex]["track"]
+        image = loadImageB64(
+            "https://ryaneller.com/wp-content/uploads/2013/10/plain-white-background-300x300.jpg")
+        artistName = ""
+        songName = "Nothing Playing"
     else:
         item = data["item"]
         currentStatus = "Vibing to:"
 
-    image = loadImageB64(item["album"]["images"][1]["url"])
-    artistName = item["artists"][0]["name"].replace("&", "&amp;")
-    songName = item["name"].replace("&", "&amp;")
+        if data["context"]["type"] == "show" or data["context"]["type"] == "episode":
+            image = loadImageB64(item["images"][1]["url"])
+            artistName = item["show"]["name"].replace("&", "&amp;")
+        else:
+            image = loadImageB64(item["album"]["images"][1]["url"])
+            artistName = item["artists"][0]["name"].replace("&", "&amp;")
+
+        songName = item["name"].replace("&", "&amp;")
 
     dataDict = {
         "contentBar": contentBar,
