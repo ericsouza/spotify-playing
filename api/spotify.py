@@ -1,4 +1,4 @@
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 import os
 import json
 import random
@@ -97,7 +97,7 @@ def load_no_music_image(choice):
 
 def is_time_between(begin_time, end_time, check_time=None):
     # If check time is not given, default to current UTC time
-    check_time = check_time or datetime.utcnow().time()
+    check_time = check_time or (datetime.utcnow() - timedelta(hours=3)).time()
     if begin_time < end_time:
         return check_time >= begin_time and check_time <= end_time
     else:  # crosses midnight
