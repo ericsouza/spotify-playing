@@ -20,13 +20,17 @@ SPOTIFY_REFRESH_TOKEN = os.getenv("SPOTIFY_REFRESH_TOKEN")
 
 SPOTIFY_URL_REFRESH_TOKEN = "https://accounts.spotify.com/api/token"
 SPOTIFY_URL_NOW_PLAYING = "https://api.spotify.com/v1/me/player/currently-playing?additional_types=track%2Cepisode"
-SPOTIFY_URL_RECENTLY_PLAY = "https://api.spotify.com/v1/me/player/recently-played?limit=10"
+SPOTIFY_URL_RECENTLY_PLAY = (
+    "https://api.spotify.com/v1/me/player/recently-played?limit=10"
+)
 
 app = Flask(__name__)
 
 
 def getAuth():
-    return b64encode(f"{SPOTIFY_CLIENT_ID}:{SPOTIFY_SECRET_ID}".encode()).decode("ascii")
+    return b64encode(f"{SPOTIFY_CLIENT_ID}:{SPOTIFY_SECRET_ID}".encode()).decode(
+        "ascii"
+    )
 
 
 def refreshToken():
@@ -37,8 +41,7 @@ def refreshToken():
 
     headers = {"Authorization": "Basic {}".format(getAuth())}
 
-    response = requests.post(SPOTIFY_URL_REFRESH_TOKEN,
-                             data=data, headers=headers)
+    response = requests.post(SPOTIFY_URL_REFRESH_TOKEN, data=data, headers=headers)
     return response.json()["access_token"]
 
 
@@ -55,13 +58,13 @@ def recentlyPlayed():
 
 def nowPlaying():
     token = refreshToken()
-    headers = {"Authorization": f"Bearer {token}",
-               "Accept": "application/json",
-               "Content-Type": "application/json"
-               }
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    }
 
-    response = requests.get(SPOTIFY_URL_NOW_PLAYING,
-                            headers=headers)
+    response = requests.get(SPOTIFY_URL_NOW_PLAYING, headers=headers)
 
     if response.status_code == 204:
         return {}
@@ -84,13 +87,11 @@ def barGen(barCount):
 
 def load_no_music_image(choice):
     if choice == "sleeping":
-        none_image_path = str(pathlib.Path().absolute()
-                              ) + "/api/static/sleeping.jpeg"
+        image_path = str(pathlib.Path().absolute()) + "/api/static/sleeping.jpeg"
     else:
-        none_image_path = str(pathlib.Path().absolute()
-                              ) + "/api/static/working.jpg"
+        image_path = str(pathlib.Path().absolute()) + "/api/static/coding.jpg"
 
-    with open(none_image_path, "rb") as image_file:
+    with open(image_path, "rb") as image_file:
         encoded_string = b64encode(image_file.read()).decode("ascii")
     return encoded_string
 
@@ -114,17 +115,16 @@ def makeSVG(data):
     contentBar = "".join(["<div class='bar'></div>" for i in range(barCount)])
     barCSS = barGen(barCount)
 
-    if data == {} or data["item"] == 'None':
+    if data == {} or data["item"] == "None":
         contentBar = ""  # Shows/Hides the EQ bar if no song is currently playing
         currentStatus = "Last seen playing:"
         artistName = ""
         songName = "Nothing Playing"
 
-        if is_time_between(time(8, 00), time(18, 00)):
-            image = load_no_music_image("working")
-
-        elif is_time_between(time(18, 00), time(8, 00)):
+        if is_time_between(time(22, 00), time(8, 00)):
             image = load_no_music_image("sleeping")
+        else:
+            image = load_no_music_image("coding")
 
     else:
         item = data["item"]
@@ -145,7 +145,7 @@ def makeSVG(data):
         "artistName": artistName,
         "songName": songName,
         "image": image,
-        "status": currentStatus
+        "status": currentStatus,
     }
 
     return render_template("spotify.html.j2", **dataDict)
