@@ -1,3 +1,4 @@
+from datetime import datetime, time
 import os
 import json
 import random
@@ -81,11 +82,26 @@ def barGen(barCount):
     return barCSS
 
 
-def load_no_music_image():
-    none_image_path = str(pathlib.Path().absolute()) + "/api/static/none.jpg"
+def load_no_music_image(choice):
+    if choice == "sleeping":
+        none_image_path = str(pathlib.Path().absolute()
+                              ) + "/api/static/sleeping.jpeg"
+    else:
+        none_image_path = str(pathlib.Path().absolute()
+                              ) + "/api/static/working.jpg"
+
     with open(none_image_path, "rb") as image_file:
         encoded_string = b64encode(image_file.read()).decode("ascii")
     return encoded_string
+
+
+def is_time_between(begin_time, end_time, check_time=None):
+    # If check time is not given, default to current UTC time
+    check_time = check_time or datetime.utcnow().time()
+    if begin_time < end_time:
+        return check_time >= begin_time and check_time <= end_time
+    else:  # crosses midnight
+        return check_time >= begin_time or check_time <= end_time
 
 
 def loadImageB64(url):
@@ -101,9 +117,15 @@ def makeSVG(data):
     if data == {} or data["item"] == 'None':
         contentBar = ""  # Shows/Hides the EQ bar if no song is currently playing
         currentStatus = "Last seen playing:"
-        image = load_no_music_image()
         artistName = ""
         songName = "Nothing Playing"
+
+        if is_time_between(time(8, 00), time(18, 00)):
+            image = load_no_music_image("working")
+
+        elif is_time_between(time(18, 00), time(8, 00)):
+            image = load_no_music_image("sleeping")
+
     else:
         item = data["item"]
         currentStatus = "Vibing to:"
