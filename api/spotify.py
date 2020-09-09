@@ -41,7 +41,8 @@ def refreshToken():
 
     headers = {"Authorization": "Basic {}".format(getAuth())}
 
-    response = requests.post(SPOTIFY_URL_REFRESH_TOKEN, data=data, headers=headers)
+    response = requests.post(SPOTIFY_URL_REFRESH_TOKEN,
+                             data=data, headers=headers)
     return response.json()["access_token"]
 
 
@@ -68,7 +69,9 @@ def nowPlaying():
 
     if response.status_code == 204:
         return {}
+    from pprint import pprint
 
+    pprint(response.json())
     return response.json()
 
 
@@ -87,7 +90,8 @@ def barGen(barCount):
 
 def load_no_music_image(choice):
     if choice == "sleeping":
-        image_path = str(pathlib.Path().absolute()) + "/api/static/sleeping.jpeg"
+        image_path = str(pathlib.Path().absolute()) + \
+            "/api/static/sleeping.jpeg"
     else:
         image_path = str(pathlib.Path().absolute()) + "/api/static/coding.jpg"
 
@@ -115,7 +119,19 @@ def makeSVG(data):
     contentBar = "".join(["<div class='bar'></div>" for i in range(barCount)])
     barCSS = barGen(barCount)
 
-    if data == {} or data["item"] == "None":
+    try:
+        item = data["item"]
+        currentStatus = "Vibing to:"
+        try:
+            image = loadImageB64(item["images"][1]["url"])
+            artistName = item["show"]["name"].replace("&", "&amp;")
+        except:
+            image = loadImageB64(item["album"]["images"][1]["url"])
+            artistName = item["artists"][0]["name"].replace("&", "&amp;")
+
+        songName = item["name"].replace("&", "&amp;")
+
+    except:
         contentBar = ""  # Shows/Hides the EQ bar if no song is currently playing
         currentStatus = "Last seen playing:"
         artistName = ""
@@ -125,19 +141,6 @@ def makeSVG(data):
             image = load_no_music_image("sleeping")
         else:
             image = load_no_music_image("coding")
-
-    else:
-        item = data["item"]
-        currentStatus = "Vibing to:"
-
-        if data["context"]["type"] == "show" or data["context"]["type"] == "episode":
-            image = loadImageB64(item["images"][1]["url"])
-            artistName = item["show"]["name"].replace("&", "&amp;")
-        else:
-            image = loadImageB64(item["album"]["images"][1]["url"])
-            artistName = item["artists"][0]["name"].replace("&", "&amp;")
-
-        songName = item["name"].replace("&", "&amp;")
 
     dataDict = {
         "contentBar": contentBar,
